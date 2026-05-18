@@ -4,6 +4,26 @@ const PROXY_URL = '/proxy/';    // 适用于 Cloudflare, Netlify (带重写), Ve
 const SEARCH_HISTORY_KEY = 'videoSearchHistory';
 const MAX_HISTORY_ITEMS = 5;
 
+// 同步获取代理鉴权 URL（用于图片 onerror 回调等无法异步的场景）
+function getProxyUrl(url) {
+    try {
+        // 直接从服务端注入的环境变量获取密码哈希（同步、最可靠）
+        const hash = window.__ENV__ && window.__ENV__.PASSWORD;
+        if (hash) {
+            return PROXY_URL + encodeURIComponent(url) + '?auth=' + encodeURIComponent(hash) + '&t=' + Date.now();
+        }
+        // fallback: 尝试 localStorage 缓存
+        const cachedHash = localStorage.getItem('proxyAuthHash');
+        if (cachedHash) {
+            return PROXY_URL + encodeURIComponent(url) + '?auth=' + encodeURIComponent(cachedHash) + '&t=' + Date.now();
+        }
+        return PROXY_URL + encodeURIComponent(url);
+    } catch (e) {
+        return PROXY_URL + encodeURIComponent(url);
+    }
+}
+window.getProxyUrl = getProxyUrl;
+
 // 密码保护配置
 // 注意：PASSWORD 环境变量是必需的，所有部署都必须设置密码以确保安全
 const PASSWORD_CONFIG = {
