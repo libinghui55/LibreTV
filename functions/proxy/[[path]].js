@@ -487,6 +487,43 @@ export async function onRequest(context) {
         return processedVariant;
     }
 
+    // --- 判断目标 URL 是否为二进制内容（图片、视频、音频等）---
+    function isBinaryUrl(targetUrl) {
+        const urlLower = targetUrl.toLowerCase().split('?')[0];
+        for (const ext of MEDIA_FILE_EXTENSIONS) {
+            if (urlLower.endsWith(ext)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // --- 流式代理二进制内容（不做 text 解析，避免损坏二进制数据）---
+    async function proxyBinaryStream(targetUrl) {
+        const headers = new Headers({
+            'User-Agent': getRandomUserAgent(),
+            'Accept': '*/*',
+            'Accept-Language': request.headers.get('Accept-Language') || 'zh-CN,zh;q=0.9,en;q=0.8',
+            'Referer': request.headers.get('Referer') || new URL(targetUrl).origin
+        });
+
+        logDebug(`开始流式代理: ${targetUrl}`);
+        const response = await fetch(targetUrl, { headers, redirect: 'follow' });
+
+        if (!response.ok) {
+            logDebug(`流式代理请求失败: ${response.status} - ${targetUrl}`);
+            throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+        }
+
+        const responseHeaders = new Headers(response.headers);
+        responseHeaders.set('Cache-Control', `public, max-age=${CACHE_TTL}`);
+        responseHeaders.set("Access-Control-Allow-Origin", "*");
+        responseHeaders.set("Access-Control-Allow-Methods", "GET, HEAD, POST, OPTIONS");
+        responseHeaders.set("Access-Control-Allow-Headers", "*");
+
+        return new Response(response.body, { status: response.status, headers: responseHeaders });
+    }
+
     // --- 主要请求处理逻辑 ---
 
     try {
@@ -498,6 +535,11 @@ export async function onRequest(context) {
         }
 
         logDebug(`收到代理请求: ${targetUrl}`);
+
+        // --- 二进制内容直接流式代理，不做 text 解析 ---
+        if (isBinaryUrl(targetUrl)) {
+            return await proxyBinaryStream(targetUrl);
+        }
 
         // --- 缓存检查 (KV) ---
         const cacheKey = `proxy_raw:${targetUrl}`; // 使用原始内容的缓存键

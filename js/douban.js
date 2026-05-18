@@ -60,7 +60,7 @@ function initDouban() {
     if (doubanToggle) {
         const isEnabled = localStorage.getItem('doubanEnabled') === 'true';
         doubanToggle.checked = isEnabled;
-        
+
         // 设置开关外观
         const toggleBg = doubanToggle.nextElementSibling;
         const toggleDot = toggleBg.nextElementSibling;
@@ -68,12 +68,12 @@ function initDouban() {
             toggleBg.classList.add('bg-pink-600');
             toggleDot.classList.add('translate-x-6');
         }
-        
+
         // 添加事件监听
         doubanToggle.addEventListener('change', function(e) {
             const isChecked = e.target.checked;
             localStorage.setItem('doubanEnabled', isChecked);
-            
+
             // 更新开关外观
             if (isChecked) {
                 toggleBg.classList.add('bg-pink-600');
@@ -82,11 +82,11 @@ function initDouban() {
                 toggleBg.classList.remove('bg-pink-600');
                 toggleDot.classList.remove('translate-x-6');
             }
-            
+
             // 更新显示状态
             updateDoubanVisibility();
         });
-        
+
         // 初始更新显示状态
         updateDoubanVisibility();
 
@@ -99,13 +99,13 @@ function initDouban() {
 
     // 渲染电影/电视剧切换
     renderDoubanMovieTvSwitch();
-    
+
     // 渲染豆瓣标签
     renderDoubanTags();
-    
+
     // 换一批按钮事件监听
     setupDoubanRefreshBtn();
-    
+
     // 初始加载热门内容 — 仅在豆瓣启用时渲染
     if (localStorage.getItem('doubanEnabled') === 'true') {
         if (window.isPasswordVerified && !window.isPasswordVerified()) {
