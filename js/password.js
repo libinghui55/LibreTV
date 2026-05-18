@@ -57,6 +57,8 @@ async function verifyPassword(password) {
                 timestamp: Date.now(),
                 passwordHash: correctHash
             }));
+            // 同步写入代理鉴权哈希，供同步 API（如图片 onerror 回调）使用
+            localStorage.setItem('proxyAuthHash', correctHash);
         }
         return isValid;
     } catch (error) {
