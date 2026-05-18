@@ -106,9 +106,17 @@ function initDouban() {
     // 换一批按钮事件监听
     setupDoubanRefreshBtn();
     
-    // 初始加载热门内容
+    // 初始加载热门内容 — 仅在豆瓣启用时渲染
     if (localStorage.getItem('doubanEnabled') === 'true') {
-        renderRecommend(doubanCurrentTag, doubanPageSize, doubanPageStart);
+        if (window.isPasswordVerified && !window.isPasswordVerified()) {
+            // 密码未验证：监听验证成功事件后再渲染，避免鉴权参数缺失
+            document.addEventListener('passwordVerified', function onVerified() {
+                document.removeEventListener('passwordVerified', onVerified);
+                renderRecommend(doubanCurrentTag, doubanPageSize, doubanPageStart);
+            });
+        } else {
+            renderRecommend(doubanCurrentTag, doubanPageSize, doubanPageStart);
+        }
     }
 }
 
